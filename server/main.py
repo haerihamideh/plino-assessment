@@ -87,3 +87,7 @@ class GetLLMsResponseBody(BaseModel):
 )
 async def get_llms() -> GetLLMsResponseBody:
     """Retrieve LLMs from the database."""
+    llms = []
+    async for llm in llms_collection.find():
+        llms.append(LLM(**llm))
+    return GetLLMsResponseBody(llms=llms)
