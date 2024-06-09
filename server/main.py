@@ -2,13 +2,15 @@ import csv
 import random
 from typing import List
 from fastapi import FastAPI, Body, status, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware import Middleware
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorCollection,
 )
 from pydantic import BaseModel
 from datetime import datetime, date, time
-from config import LLMS_CSV_FILE_PATH
+from config import LLMS_CSV_FILE_PATH, ALLOWED_ORIGINS_CORS
 
 
 class LLM(BaseModel):
@@ -19,7 +21,17 @@ class LLM(BaseModel):
     num_million_parameters: int
 
 
-app = FastAPI()
+app = FastAPI(
+    middleware=[
+        Middleware(
+            CORSMiddleware,
+            allow_origins=ALLOWED_ORIGINS_CORS,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    ]
+)
 llms_collection: AsyncIOMotorCollection = AsyncIOMotorClient(
     "mongodb://root:example@mongodb:27017"
 )["plino"]["llms"]
