@@ -1,6 +1,6 @@
 import csv
 import random
-from typing import List
+from typing import List, Literal
 from fastapi import FastAPI, Body, status, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
@@ -11,12 +11,12 @@ from motor.motor_asyncio import (
 )
 from pydantic import BaseModel
 from datetime import datetime, date, time
-from config import LLMS_CSV_FILE_PATH, ALLOWED_ORIGINS_CORS
+from config import LLMS_CSV_FILE_PATH, ALLOWED_ORIGINS_CORS, POSSIBLE_LLM_CATEGORIES
 
 
 class LLM(BaseModel):
     company: str
-    category: str
+    category: Literal[tuple(POSSIBLE_LLM_CATEGORIES)]
     release_date: date
     model_name: str
     num_million_parameters: int
@@ -57,6 +57,14 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
+
+
+@app.get("/config")
+async def get_config() -> dict:
+    """
+    Returns the configuration options for the webapp.
+    """
+    return {"allowed_llm_categories": POSSIBLE_LLM_CATEGORIES}
 
 
 @app.post(
@@ -129,5 +137,6 @@ async def get_llms() -> GetLLMsResponseBody:
     """Retrieve LLMs from the database."""
     llms = []
     async for llm in llms_collection.find():
+        print(llm)
         llms.append(LLM(**llm))
     return GetLLMsResponseBody(llms=llms)

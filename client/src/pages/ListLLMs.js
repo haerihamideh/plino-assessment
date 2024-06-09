@@ -1,15 +1,20 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Input, Select, Table} from "react-daisyui";
 import axios from "axios";
+import {getPossibleLLMCategories} from "../utils";
 
 function ListLLMs() {
   const [llms, setLLMs] = React.useState([]);
-  const [filterCategory, setFilterCategory] = React.useState('');
-  const [filterCompany, setFilterCompany] = React.useState('');
-  const [filteredLLMs, setFilteredLLMs] = React.useState([]);
-  const possibleCategories = ['Vision', 'Instruct', 'Chat', 'Other']; //TODO fetch from API
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterCompany, setFilterCompany] = useState('');
+  const [filteredLLMs, setFilteredLLMs] = useState([]);
+  const [possibleCategories, setPossibleCategories] = useState([]);
 
   useEffect(() => {
+    getPossibleLLMCategories()
+      .then(categories => setPossibleCategories(categories));
+
+
     axios.get('http://localhost:8000/llms').then(response => {
       setLLMs(response.data.llms);
     }).catch(error => {

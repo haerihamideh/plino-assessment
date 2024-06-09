@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, Button, Card, Divider, Input, Select, Toast} from "react-daisyui";
 import axios from "axios";
+import {getPossibleLLMCategories} from "../utils";
 
 function AddLLM() {
   const [company, setCompany] = useState('');
@@ -8,9 +9,14 @@ function AddLLM() {
   const [releaseDate, setReleaseDate] = useState('');
   const [category, setCategory] = useState('');
   const [numMillionParams, setNumMillionParams] = useState(0);
-  const possibleCategories = ['Vision', 'Instruct', 'Chat', 'Other']; //TODO fetch from API
+  const [possibleCategories, setPossibleCategories] = useState([]);
 
   const [notification, setNotification] = useState(undefined);
+
+  useEffect(() => {
+    getPossibleLLMCategories()
+      .then(categories => setPossibleCategories(categories));
+  }, []);
 
   const handleSaveLLM = (isLLMRandom) => {
     let data = undefined;
