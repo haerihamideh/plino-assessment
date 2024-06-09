@@ -1,9 +1,10 @@
 import csv
 import random
 from typing import List
-from fastapi import FastAPI, Body, status, HTTPException
+from fastapi import FastAPI, Body, status, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
+from fastapi.websockets import WebSocketDisconnect
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorCollection,
@@ -35,6 +36,22 @@ app = FastAPI(
 llms_collection: AsyncIOMotorCollection = AsyncIOMotorClient(
     "mongodb://root:example@mongodb:27017"
 )["plino"]["llms"]
+
+
+ws_clients: List[WebSocket] = []  # WebSocket clients
+"""WebSockets are used to notify clients about the insertion of a new LLM in the DB."""
+
+
+@app.websocket_route("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    ws_clients.append(websocket)
+    try:
+        while True:
+            _ = await websocket.receive_text()
+            # Keep the connection alive
+    except WebSocketDisconnect:
+        ws_clients.remove(websocket)
 
 
 @app.get("/")
@@ -86,6 +103,17 @@ async def create_llm(
         "release_date": datetime.combine(llm.release_date, time.min),
     }
     await llms_collection.insert_one(llm_dict)
+
+    # Notify all connected clients about the new LLM
+    llm_sent_info = {
+        **llm_dict,
+        "release_date": llm_dict.get(
+            "release_date"
+        ).isoformat(),  # Format to be able to JSON-encode the date
+    }
+    del llm_sent_info["_id"]  # We do not want to send this information
+    for client in ws_clients:
+        await client.send_json(llm_sent_info)
 
 
 class GetLLMsResponseBody(BaseModel):

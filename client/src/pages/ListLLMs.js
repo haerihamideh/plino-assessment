@@ -15,6 +15,24 @@ function ListLLMs() {
     }).catch(error => {
       console.error(error);
     });
+
+    // Initialize WebSocket connection to listen for new LLMs
+    const ws = new WebSocket('ws://localhost:8000/ws');
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    }
+    ws.onmessage = (event) => {
+      const newLLM = JSON.parse(event.data);
+      setLLMs(prevLLMs => [...prevLLMs, newLLM]);
+    };
+    ws.onerror = (error) => {
+      console.error(error);
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -32,7 +50,7 @@ function ListLLMs() {
         <p className="text-left"> You can filter the results in the table using the appropriate input fields below.</p>
       </div>
 
-      <Table zebra className="mt-7">
+      <Table zebra className="mt-7 mb-12">
         <Table.Head>
           <span/>
           <span>Company</span>
@@ -45,12 +63,13 @@ function ListLLMs() {
         <Table.Body>
           <Table.Row>
             <span/>
-            <div >
-              <Input className="w-full" placeholder="Filter by company..." onChange={e => setFilterCompany(e.target.value)}/>
+            <div>
+              <Input className="w-full" placeholder="Filter by company..."
+                     onChange={e => setFilterCompany(e.target.value)}/>
             </div>
             <span/>
             <span/>
-            <div >
+            <div>
               <Select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full">
                 <option value={''}>
                   Filter by category
