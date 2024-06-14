@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   mongodb:
     image: mongo:7.0
@@ -38,6 +40,7 @@ services:
     volumes:
       - ./client/public:/app/public
       - ./client/src:/app/src
+      - /app/node_modules
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
@@ -46,4 +49,3 @@ services:
       - "3000:3000"
     depends_on:
       - server
-

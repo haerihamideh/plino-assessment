@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {Alert, Button, Card, Divider, Input, Select, Toast} from "react-daisyui";
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Card, Input, Select, Toast } from "react-daisyui";
 import axios from "axios";
-import {getPossibleLLMCategories} from "../utils";
+import { getPossibleLLMCategories } from "../utils";
 
 function AddLLM() {
   const [company, setCompany] = useState('');
@@ -15,7 +15,7 @@ function AddLLM() {
 
   useEffect(() => {
     getPossibleLLMCategories()
-      .then(categories => setPossibleCategories(categories));
+        .then(categories => setPossibleCategories(categories));
   }, []);
 
   const handleSaveLLM = (isLLMRandom) => {
@@ -35,107 +35,93 @@ function AddLLM() {
     }
     APIrequest.then(response => {
       setNotification(
-        {
-          type: "success",
-          message: "LLM added successfully!"
-        }
+          {
+            type: "success",
+            message: "LLM added to the database!"
+          }
       );
+      // Clear form fields after successful addition
+      setCompany('');
+      setModelName('');
+      setReleaseDate('');
+      setCategory('');
+      setNumMillionParams(0);
     }).catch(error => {
-      let message = "An unexpected error occurred while adding the LLM!";
+      let message = "An unexpected error happened";
       if (error.response) {
         switch (error.response.status) {
           case 409:
-            message = "The LLM you tried to add is already in the DB!"
+            message = "The LLM you tried to add is already in the database"
             break;
           default:
             break;
         }
       }
       setNotification(
-        {
-          type: "error",
-          message: message
-        }
+          {
+            type: "error",
+            message: message
+          }
       );
     }).finally(
-      // Hide the notification after 5 seconds
-      () => {
-        setTimeout(() => {
-          setNotification(undefined);
-        }, 5000);
-      }
+        // Hide the notification after 5 seconds
+        () => {
+          setTimeout(() => {
+            setNotification(undefined);
+          }, 5000);
+        }
     )
   }
 
+  const today = new Date().toISOString().split('T')[0]; // Get today's date
+
   return (
-    <>
-      <section className="grid place-items-center mt-6">
-        <Card className="sm:w-full md:w-1/2 lg:w-1/3">
-          <Card.Body>
-            <Card.Title tag="h2">Add a new LLM!</Card.Title>
+      <>
+        <section className="grid place-items-center mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
+            <Card className="shadow-xl w-full md:w-auto"> {/* Adjust the width of the card */}
+              <Card.Body>
+                <Card.Title tag="h2">Add a New LLM</Card.Title>
+                <div className="flex flex-col" style={{ gap: '8px' }}>
+                  <label className="label">Company</label>
+                  <Input placeholder="Company" value={company} onChange={e => setCompany(e.target.value)} />
 
-            <div className="grid grid-cols-6 gap-4">
-              <div className="form-control col-span-6 md:col-span-3 w-full">
-                <label className="label">
-                  <span className="label-text">Company</span>
-                </label>
-                <Input onChange={e => setCompany(e.target.value)}/>
-              </div>
+                  <label className="label">Model Name</label>
+                  <Input placeholder="Model Name" value={modelName} onChange={e => setModelName(e.target.value)} />
 
-              <div className="form-control col-span-6 md:col-span-3 w-full">
-                <label className="label">
-                  <span className="label-text">Model name</span>
-                </label>
-                <Input onChange={e => setModelName(e.target.value)}/>
-              </div>
+                  <label className="label">Release Date</label>
+                  <Input type="date" placeholder="Release Date" max={today} value={releaseDate} onChange={e => setReleaseDate(e.target.value)} />
 
-              <div className="form-control col-span-6 md:col-span-2 w-full">
-                <label className="label">
-                  <span className="label-text">Release date</span>
-                </label>
-                <Input type="date" onChange={e => setReleaseDate(e.target.value)}/>
-              </div>
+                  <label className="label">Category</label>
+                  <Select value={category} onChange={e => setCategory(e.target.value)}>
+                    <option value={''} disabled>Select Category</option>
+                    {possibleCategories.map((cat, i) => (
+                        <option key={i} value={cat}>{cat}</option>
+                    ))}
+                  </Select>
 
-              <div className="form-control col-span-6 md:col-span-2 w-full">
-                <label className="label">
-                  <span className="label-text">Category</span>
-                </label>
-                <Select value={category} onChange={e => setCategory(e.target.value)}>
-                  <option value={''} disabled>
-                    Choose a category
-                  </option>
-                  {possibleCategories.map((cat, i) => (
-                    <option key={i} value={cat}>{cat}</option>
-                  ))}
-                </Select>
-              </div>
+                  <label className="label">Number of Million Parameters</label>
+                  <Input type="number" placeholder="Number of Million Parameters" value={numMillionParams} onChange={e => setNumMillionParams(parseInt(e.target.value))} />
 
-              <div className="form-control col-span-6 md:col-span-2 w-full">
-                <label className="label">
-                  <span className="label-text">Num. million parameters</span>
-                </label>
-                <Input type="number" onChange={e => setNumMillionParams(parseInt(e.target.value))}/>
-              </div>
+                  <Button onClick={() => handleSaveLLM(false)}>Add LLM</Button>
+                </div>
+              </Card.Body>
+            </Card>
+            <Card className="shadow-xl w-full md:w-auto"> {/* Adjust the width of the card */}
+              <Card.Body className="flex flex-col items-center justify-center">
+                <Card.Title tag="h2">Generate Random LLM</Card.Title>
+                <Button className="mt-4" onClick={() => handleSaveLLM(true)}>Generate</Button>
+              </Card.Body>
+            </Card>
+          </div>
+        </section>
 
-              <Button className="col-span-6 btn-primary mt-2"
-                      onClick={() => handleSaveLLM(false)}>Add!</Button>
-            </div>
-
-
-            <Divider>or</Divider>
-
-            <Button className="btn-secondary" onClick={() => handleSaveLLM(true)}>Generate randomly</Button>
-          </Card.Body>
-        </Card>
-      </section>
-
-      {/* TODO in the future, improve the notification system by allowing multiple alerts to be shown at the same time */}
-      {notification &&
-        <Toast vertical='top' horizontal='end'>
-          <Alert status={notification.type}>{notification.message}</Alert>
-        </Toast>
-      }
-    </>
+        {notification &&
+            <Toast vertical='top' horizontal='end'>
+              <Alert status={notification.type}>{notification.message}</Alert>
+            </Toast>
+        }
+      </>
   );
 }
 

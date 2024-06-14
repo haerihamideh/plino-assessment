@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from datetime import datetime, date, time
 from config import LLMS_CSV_FILE_PATH, ALLOWED_ORIGINS_CORS, POSSIBLE_LLM_CATEGORIES
 
-
 class LLM(BaseModel):
     company: str
     category: Literal[tuple(POSSIBLE_LLM_CATEGORIES)]
@@ -36,7 +35,6 @@ app = FastAPI(
 llms_collection: AsyncIOMotorCollection = AsyncIOMotorClient(
     "mongodb://root:example@mongodb:27017"
 )["plino"]["llms"]
-
 
 ws_clients: List[WebSocket] = []  # WebSocket clients
 """WebSockets are used to notify clients about the insertion of a new LLM in the DB."""
@@ -76,10 +74,10 @@ async def create_llm(
 ) -> None:
     """
     If the request body contains info about a particular LLM, add it to the MongoDB collection.
-    Otherwise, read a random LLM from the CSV file and insert it into the.DB.
+    Otherwise, read a random LLM from the CSV file and insert it into the DB.
     """
     if not llm:
-        # The user provided no request body, so we create one from a random row
+        # Mode 1: The user provided no request body, so we create one from a random row
         # from the LLMs CSV file
         with open(LLMS_CSV_FILE_PATH, mode="r") as file:
             reader = csv.DictReader(file)
@@ -97,14 +95,16 @@ async def create_llm(
                 release_date=date.fromisoformat(chosen_llm["release_date"]),
                 category=chosen_llm["category"],
             )
-
-    existing_llm = await llms_collection.find_one(
-        {"company": llm.company, "model_name": llm.model_name}
-    )
-    if existing_llm:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="LLM already present in DB"
+    else:
+        # Mode 2: Validate the provided LLM object
+        existing_llm = await llms_collection.find_one(
+            {"company": llm.company, "model_name": llm.model_name}
         )
+        if existing_llm:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="LLM already present in DB"
+            )
+
     # MongoDB cannot store dates without times, so we set the time at midnight for the release date
     llm_dict = {
         **llm.dict(),
@@ -137,6 +137,20 @@ async def get_llms() -> GetLLMsResponseBody:
     """Retrieve LLMs from the database."""
     llms = []
     async for llm in llms_collection.find():
-        print(llm)
-        llms.append(LLM(**llm))
+        llms.append(
+            LLM(
+                company=llm["company"],
+                category=llm["category"],
+                release_date=llm["release_date"].date(),
+                model_name=llm["model_name"],
+                num_million_parameters=llm["num_million_parameters"],
+            )
+        )
     return GetLLMsResponseBody(llms=llms)
+
+
+
+
+
+
+

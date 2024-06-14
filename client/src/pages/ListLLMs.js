@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {Input, Select, Table} from "react-daisyui";
+import {Button, Card, Input, Select, Table} from "react-daisyui";
 import axios from "axios";
 import {getPossibleLLMCategories} from "../utils";
 
 function ListLLMs() {
-  const [llms, setLLMs] = React.useState([]);
+  const [llms, setLLMs] = useState([]);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
   const [filteredLLMs, setFilteredLLMs] = useState([]);
@@ -12,8 +12,7 @@ function ListLLMs() {
 
   useEffect(() => {
     getPossibleLLMCategories()
-      .then(categories => setPossibleCategories(categories));
-
+        .then(categories => setPossibleCategories(categories));
 
     axios.get('http://localhost:8000/llms').then(response => {
       setLLMs(response.data.llms);
@@ -49,56 +48,54 @@ function ListLLMs() {
   }, [llms, filterCategory, filterCompany]);
 
   return (
-    <div className="container mx-auto p-4 ">
-      <div className="prose lg:prose-xl">
-        <h3 className="text-left">Browse the Large Language Models!</h3>
-        <p className="text-left"> You can filter the results in the table using the appropriate input fields below.</p>
+      <div className="container mx-auto p-6 bg-gray-100 rounded-lg shadow-md">
+        <Card className="w-full bg-white shadow-lg">
+          <Card.Body>
+            <Card.Title className="text-center text-2xl font-bold mb-6">List of LLMs</Card.Title>
+            <Table className="table-auto w-full">
+              <thead>
+              <tr className="bg-gray-200">
+                <th className="p-4">#</th>
+                <th className="p-4">Company</th>
+                <th className="p-4">Model Name</th>
+                <th className="p-4">Release Date</th>
+                <th className="p-4">Category</th>
+                <th className="p-4">Number of Million Parameters</th>
+              </tr>
+              <tr>
+                <td className="p-4"/>
+                <td className="p-4">
+                  <Input className="w-full" placeholder="Filter by company" onChange={e => setFilterCompany(e.target.value)} />
+                </td>
+                <td className="p-4"/>
+                <td className="p-4"/>
+                <td className="p-4">
+                  <Select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full">
+                    <option value={''}>Filter by category</option>
+                    {possibleCategories.map((cat, i) => (
+                        <option key={i} value={cat}>{cat}</option>
+                    ))}
+                  </Select>
+                </td>
+                <td className="p-4"/>
+              </tr>
+              </thead>
+              <tbody>
+              {filteredLLMs.map((llm, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="p-4 text-center">{index + 1}</td>
+                    <td className="p-4">{llm.company}</td>
+                    <td className="p-4">{llm.model_name}</td>
+                    <td className="p-4">{llm.release_date}</td>
+                    <td className="p-4">{llm.category}</td>
+                    <td className="p-4 text-right">{llm.num_million_parameters}</td>
+                  </tr>
+              ))}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
       </div>
-
-      <Table zebra className="mt-7 mb-12">
-        <Table.Head>
-          <span/>
-          <span>Company</span>
-          <span>Model name</span>
-          <span>Release date</span>
-          <span>Category</span>
-          <span>Num. million parameters</span>
-        </Table.Head>
-
-        <Table.Body>
-          <Table.Row>
-            <span/>
-            <div>
-              <Input className="w-full" placeholder="Filter by company..."
-                     onChange={e => setFilterCompany(e.target.value)}/>
-            </div>
-            <span/>
-            <span/>
-            <div>
-              <Select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full">
-                <option value={''}>
-                  Filter by category
-                </option>
-                {possibleCategories.map((cat, i) => (
-                  <option key={i} value={cat}>{cat}</option>
-                ))}
-              </Select>
-            </div>
-            <span/>
-          </Table.Row>
-          {filteredLLMs.map((llm, index) => (
-            <Table.Row key={index}>
-              <span>{index}</span>
-              <span>{llm.company}</span>
-              <span>{llm.model_name}</span>
-              <span>{llm.release_date}</span>
-              <span>{llm.category}</span>
-              <span>{llm.num_million_parameters}</span>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table>
-    </div>
   );
 }
 
